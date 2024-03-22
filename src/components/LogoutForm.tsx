@@ -1,6 +1,8 @@
+import { logout } from "@/actions";
+
 export default function LogoutForm() {
   return (
-    <form action="">
+    <form action={logout}>
       <button>logout</button>
     </form>
   );
