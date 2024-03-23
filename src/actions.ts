@@ -7,9 +7,10 @@ import {
 } from "./lib";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
-const username = "John";
-const isPro = true;
+let username = "John";
+let isPro = true;
 
 export const getSession = async () => {
   const session = await getIronSession<SessionData>(
@@ -24,14 +25,17 @@ export const getSession = async () => {
   return session;
 };
 
-export const login = async (formData: FormData) => {
+export const login = async (
+  prevState: { error: undefined | string },
+  formData: FormData
+) => {
   const session = await getSession();
 
   const formUser = formData.get("username");
   const formPassword = formData.get("password");
 
   if (formUser !== username) {
-    return { error: "Invalid username" };
+    return { error: "Invalid credentials" };
   }
 
   session.userId = "1";
@@ -47,4 +51,23 @@ export const logout = async () => {
   const session = await getSession();
   session.destroy();
   redirect("/");
+};
+
+export const changePremium = async () => {
+  const session = await getSession();
+  isPro = !session.isPro;
+
+  session.isPro = isPro;
+  await session.save();
+  revalidatePath("/profile");
+};
+
+export const changeUsername = async (formData: FormData) => {
+  const session = await getSession();
+  const newUsername = formData.get("username") as string;
+
+  username = newUsername;
+  session.username = username;
+  await session.save();
+  revalidatePath("/profile");
 };
